@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+       .cube {
+            width: 20px;
+            height: 20px;
+            background-color: #6a0dad;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: spin 2s linear infinite;
+            display: none;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+        header {
+            background-color: #6a0dad;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 24px;
+        }
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #2e2e2e;
+            border-top: 1px solid #444;
+            border-bottom: 1px solid #444;
+            margin-bottom: 60px; /* Adjusted to make space for the send message bar */
+        }
+        #messages li {
+            padding: 8px;
+            margin-bottom: 10px;
+            background-color: #3e3e3e;
+            border-radius: 5px;
+            list-style: none;
+        }
+        #form {
+            display: flex;
+            padding: 10px;
+            background-color: #2e2e2e;
+            border-top: 1px solid #444;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            margin-right: 10px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+        #send {
+            padding: 10px 20px;
+            background-color: #6a0dad;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #send:hover {
+            background-color: #4b0082;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #2e2e2e;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 300px;
+            border-radius: 10px;
+            color: #e0e0e0;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 200px;
+            height: 100%;
+            background-color: #2e2e2e;
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+            display: none;
+        }
+        #sidebar h3 {
+            margin-top: 0;
+        }
+        #sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #sidebar ul li {
+            margin-bottom: 10px;
+        }
+        #sidebar ul li a {
+            color: white;
+            text-decoration: none;
+        }
+        #sidebar ul li a:hover {
+            text-decoration: underline;
+        }
+        #newChannelBtn, #closeSidebarBtn {
+            background-color: #6a0dad;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #newChannelBtn:hover, #closeSidebarBtn:hover {
+            background-color: #4b0082;
+        }
+        #currentChannelDisplay {
+            font-size: 18px;
+            font-weight: bold;
+            color: #6a0dad;
+        }
+        #openbar {
+            background-color: #6a0dad;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .tophead {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: black;
+            padding: 10px;
+            border: 2px solid #6a0dad;
+            box-shadow: 0 0 10px #6a0dad;
+        }
+        #usernameDisplay {
+            margin-left: auto;
+            color: #6a0dad;
+            font-weight: bold;
+        }
+        .cube {
+            width: 20px;
+            height: 20px;
+            background-color: #6a0dad;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: spin 2s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        .img {
+            max-width: 500px;
+            max-height: 500px;
+        }
+        #img {
+            max-width: 500px;
+            max-height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div class="tophead">
+        <button id="openbar">☰</button>
+        <div id="currentChannelDisplay" style="margin-left: 10px;">general</div>
+        <div class="cube" id="connectionCube"></div>
+        <div id="usernameDisplay">Username</div>
+    </div>
+    <ul id="messages"></ul>
+    <form id="form" action="">
+        <input id="input" autocomplete="off" placeholder="Type a message..." />
+        <input type="file" id="imageInput" accept="image/*" style="display: none;" />
+        <label for="imageInput" id="imageLabel" style="padding: 10px 20px; background-color: #6a0dad; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">Upload Image</label>
+        <button id="send">Send</button>        
+    </form>
+    <div id="channelModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>Please enter the channel name:</p>
+            <input type="text" id="channelInput" />
+            <button id="submitChannel">Submit</button>
+        </div>
+    </div>
+    <div id="usernameModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>Please enter your username:</p>
+            <input type="text" id="usernameInput" />
+            <button id="submitUsername">Submit</button>
+        </div>
+    </div>
+    <div id="sidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Channels</h3>
+            <button id="closeSidebarBtn" style="margin-left: 10px;">Close Sidebar</button>
+        </div>
+        <ul id="channels">
+            <li><a href="#" class="channel" data-channel="general">General</a></li>
+            <li><a href="#" class="channel" data-channel="random">Random</a></li>
+            <button id="newChannelBtn">+</button>
+        </ul>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+        var openbar = document.getElementById('openbar');
+        var channelModal = document.getElementById('channelModal');
+        var newChannelBtn = document.getElementById('newChannelBtn');
+        var channelInput = document.getElementById('channelInput');
+        var submitChannel = document.getElementById('submitChannel');
+        var closeChannelModal = document.getElementsByClassName('close')[0];
+        var sidebar = document.getElementById('sidebar');
+        var closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        var currentChannelDisplay = document.getElementById('currentChannelDisplay');
+        var usernameDisplay = document.getElementById('usernameDisplay');
+        var connectionCube = document.getElementById('connectionCube');
+
+        newChannelBtn.onclick = function() {
+            channelModal.style.display = 'block';
+        }
+
+        closeChannelModal.onclick = function() {
+            channelModal.style.display = 'none';
+        }
+
+        openbar.onclick = function() {
+            sidebar.style.display = 'block';
+            sidebar.classList.add('show');
+        }
+
+        closeSidebarBtn.onclick = function() {
+            sidebar.classList.remove('show');
+            sidebar.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == channelModal) {
+                channelModal.style.display = 'none';
+            }
+        }
+
+        submitChannel.onclick = function() {
+            var channelName = channelInput.value;
+            if (channelName) {
+                socket.emit('create channel', channelName);
+                channelModal.style.display = 'none';
+            } else {
+                alert('Channel name cannot be empty');
+            }
+        }
+        function scrollToBottom() {
+            var messages = document.getElementById('messages');
+            messages.scrollTop = messages.scrollHeight;
+        }
+        socket.on('new channel', function(channelName) {
+            var channelList = document.getElementById('channels');
+            var newChannel = document.createElement('li');
+            var channelLink = document.createElement('a');
+            channelLink.href = "#";
+            channelLink.className = "channel";
+            channelLink.setAttribute('data-channel', channelName);
+            channelLink.textContent = channelName;
+            newChannel.appendChild(channelLink);
+            channelList.appendChild(newChannel);
+            var plus = document.getElementById("newChannelBtn")
+            plus.remove()
+            var plus2 = document.createElement('button');
+            plus2.textContent = "+";
+            plus2.id = "newChannelBtn";
+            newChannelBtn = plus2;
+            newChannelBtn.onclick = function() {
+            channelModal.style.display = 'block';
+            
+            }
+            channelList.append(plus2);
+            channelLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentChannel = this.getAttribute('data-channel');
+                socket.emit('join channel', currentChannel);
+
+                currentChannelDisplay.textContent = currentChannel;
+            });
+        });
+
+        socket.on('connect', function() {
+            connectionCube.style.display = 'block';
+        });
+
+        socket.on('disconnect', function() {
+            connectionCube.style.display = 'none';
+        });
+    </script>
+    <script>
+        var currentChannel = 'general';
+        var channels = document.querySelectorAll('.channel');
+
+        channels.forEach(function(channel) {
+            channel.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentChannel = this.getAttribute('data-channel');
+                socket.emit('join channel', currentChannel);
+                messages.replaceChildren();
+                currentChannelDisplay.textContent = currentChannel;
+            });
+        });
+    </script>
+    <script>
+        var form = document.getElementById('form');
+        var input = document.getElementById('input');
+        var messages = document.getElementById('messages');
+        var username = "Stupid-Baby";
+        var modal = document.getElementById('usernameModal');
+        
+        var usernameInput = document.getElementById('usernameInput');
+        var submitUsername = document.getElementById('submitUsername');
+        var span = document.getElementsByClassName('close')[0];
+        function generateUniqueId(length) {
+         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+         let result = '';
+         const charactersLength = characters.length;
+         for (let i = 0; i < length; i++) {
+             result += characters.charAt(Math.floor(Math.random() * charactersLength));
+         }
+          return result;
+        }
+        
+
+        var id_check = generateUniqueId(69);
+        const unique_id = id_check;
+        
+        modal.style.display = 'block';
+
+        span.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        submitUsername.onclick = function() {
+            var username = usernameInput.value;
+            if (username) {
+                socket.emit('set username', username, unique_id);
+                modal.style.display = 'none';
+                socket.emit('join channel', currentChannel);
+                usernameDisplay.textContent = username;
+            } else {
+                alert('Username cannot be empty');
+            }
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('chat message', input.value , username, currentChannel);
+                input.value = '';
+            }
+        });
+        socket.on('taken', function(user,id){
+            if (id == unique_id) {
+                alert('Username is taken');
+                modal.style.display = 'block';
+            }
+        })
+        socket.on('kept', function(user,id){
+            if (id == unique_id) {
+                username = user
+                usernameDisplay.textContent = username;
+            }
+        })
+        socket.on('chat message', function(msg,user,channel) {
+            if (channel == currentChannel) {
+                var item = document.createElement('li');
+                item.textContent = user + ": " + msg;
+                messages.appendChild(item);
+                messages.scrollTop = messages.scrollHeight;
+                scrollToBottom()
+            }
+
+        });
+    </script>
+    <script>
+        var imageInput = document.getElementById('imageInput');
+        var imageLabel = document.getElementById('imageLabel');
+
+        imageLabel.addEventListener('click', function() {
+            imageInput.click();
+        });
+
+        imageInput.addEventListener('change', function() {
+            var file = imageInput.files[0];
+            if (file) {
+                var formData = new FormData();
+                formData.append('image', file);
+
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    socket.emit('image message', data.imageUrl, username, currentChannel);
+                })
+                .catch(error => {
+                    console.error('Error uploading image:', error);
+                });
+            }
+        });
+
+        socket.on('image message', function(imageUrl, user, channel) {
+            if (channel == currentChannel) {
+                var item = document.createElement('li');
+                var img = document.createElement('img');
+                img.src = imageUrl;
+                img.className = "img";
+                item.appendChild(img);
+                messages.appendChild(item);
+                messages.scrollTop = messages.scrollHeight;
+                scrollToBottom()
+            }
+        });
+    </script>
+    <div id="notification" style="display: none; position: fixed; top: 20px; right: 20px; background-color: #6a0dad; color: white; padding: 15px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+        <span id="notificationMessage"></span>
+    </div>
+    <script>
+        function showNotification(message) {
+            var notification = document.getElementById('notification');
+            var notificationMessage = document.getElementById('notificationMessage');
+            notificationMessage.textContent = message;
+            notification.style.display = 'block';
+
+            setTimeout(function() {
+                notification.style.transition = 'transform 1s ease';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(function() {
+                    notification.style.display = 'none';
+                    notification.style.transform = 'translateX(0)';
+                }, 1000);
+            }, 10000);
+        }
+        socket.on('noti', function(msg){
+            showNotification(msg)
+        })
+    </script>
+</body>
+</html>
